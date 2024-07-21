@@ -16,6 +16,7 @@ body {
     display: grid;
     grid-template-columns: repeat(10, 40px);
     gap: 5px;
+    margin-top: 20px;
 }
 
 .cell {
@@ -37,4 +38,17 @@ body {
 
 .cell.bomb {
     background-color: #ff4c4c;
+}
+
+.cell.flagged {
+    background-color: #f0e68c;
+}
+
+.status {
+    margin-top: 20px;
+}
+
+#status-text {
+    font-size: 18px;
+    margin-right: 10px;
 }

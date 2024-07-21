@@ -1,18 +1,35 @@
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('minesweeper-grid');
+    const statusText = document.getElementById('status-text');
+    const resetButton = document.getElementById('reset-button');
     const width = 10;
     const bombCount = 20;
-    const cells = [];
-    const bombs = Array(bombCount).fill('bomb');
-    const emptyCells = Array(width * width - bombCount).fill('empty');
-    const gameArray = emptyCells.concat(bombs).sort(() => Math.random() - 0.5);
+    let cells = [];
+    let gameArray = [];
+    let isGameOver = false;
+    let flags = 0;
 
     function createBoard() {
+        cells = [];
+        gameArray = [];
+        grid.innerHTML = '';
+        isGameOver = false;
+        flags = 0;
+        statusText.textContent = 'Game in Progress';
+
+        const bombs = Array(bombCount).fill('bomb');
+        const emptyCells = Array(width * width - bombCount).fill('empty');
+        gameArray = emptyCells.concat(bombs).sort(() => Math.random() - 0.5);
+
         for (let i = 0; i < width * width; i++) {
             const cell = document.createElement('div');
             cell.setAttribute('id', i);
             cell.classList.add('cell');
             cell.addEventListener('click', () => click(cell));
+            cell.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                addFlag(cell);
+            });
             grid.appendChild(cell);
             cells.push(cell);
         }
@@ -40,12 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function click(cell) {
         const currentId = cell.id;
-        if (cell.classList.contains('revealed')) return;
+        if (isGameOver || cell.classList.contains('revealed') || cell.classList.contains('flagged')) return;
         cell.classList.add('revealed');
 
         if (gameArray[currentId] === 'bomb') {
             cell.classList.add('bomb');
             cell.innerHTML = '💣';
+            gameOver();
         } else {
             const total = cell.getAttribute('data');
             if (total != 0) {
@@ -102,6 +120,48 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 10);
     }
+
+    function addFlag(cell) {
+        if (isGameOver) return;
+        if (!cell.classList.contains('revealed') && (flags < bombCount || cell.classList.contains('flagged'))) {
+            if (!cell.classList.contains('flagged')) {
+                cell.classList.add('flagged');
+                cell.innerHTML = '🚩';
+                flags++;
+                checkWin();
+            } else {
+                cell.classList.remove('flagged');
+                cell.innerHTML = '';
+                flags--;
+            }
+        }
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        statusText.textContent = 'Game Over!';
+        cells.forEach(cell => {
+            if (gameArray[cell.id] === 'bomb') {
+                cell.classList.add('bomb');
+                cell.innerHTML = '💣';
+            }
+        });
+    }
+
+    function checkWin() {
+        let matches = 0;
+        for (let i = 0; i < cells.length; i++) {
+            if (cells[i].classList.contains('flagged') && gameArray[i] === 'bomb') {
+                matches++;
+            }
+            if (matches === bombCount) {
+                statusText.textContent = 'You Win!';
+                isGameOver = true;
+            }
+        }
+    }
+
+    resetButton.addEventListener('click', createBoard);
 
     createBoard();
 });
