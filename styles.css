@@ -14,7 +14,6 @@ body {
 
 .minesweeper-grid {
     display: grid;
-    grid-template-columns: repeat(10, 40px);
     gap: 5px;
     margin-top: 20px;
 }
@@ -66,3 +65,25 @@ body {
 #difficulty-select {
     margin-left: 10px;
 }
+
+.hidden {
+    display: none;
+}
+
+.scoreboard {
+    margin-top: 20px;
+}
+
+.history {
+    margin-top: 20px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    margin: 5px 0;
+}
+ 

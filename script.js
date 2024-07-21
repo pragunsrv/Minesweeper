@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer');
     const flagsRemainingDisplay = document.getElementById('flags-remaining');
     const difficultySelect = document.getElementById('difficulty-select');
+    const customSettings = document.getElementById('custom-settings');
+    const gridSizeInput = document.getElementById('grid-size');
+    const bombCountInput = document.getElementById('bomb-count');
+    const bestEasy = document.getElementById('best-easy');
+    const bestMedium = document.getElementById('best-medium');
+    const bestHard = document.getElementById('best-hard');
+    const historyList = document.getElementById('history-list');
+    
     let width = 10;
     let bombCount = 20;
     let cells = [];
@@ -13,23 +21,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let flags = 0;
     let time = 0;
     let timer;
+    let bestTimes = {
+        easy: null,
+        medium: null,
+        hard: null
+    };
+    let gameHistory = [];
 
     difficultySelect.addEventListener('change', () => {
         switch (difficultySelect.value) {
             case 'easy':
                 width = 10;
                 bombCount = 10;
+                customSettings.classList.add('hidden');
                 break;
             case 'medium':
                 width = 10;
                 bombCount = 20;
+                customSettings.classList.add('hidden');
                 break;
             case 'hard':
                 width = 10;
                 bombCount = 30;
+                customSettings.classList.add('hidden');
+                break;
+            case 'custom':
+                customSettings.classList.remove('hidden');
                 break;
         }
         createBoard();
+    });
+
+    gridSizeInput.addEventListener('input', () => {
+        width = parseInt(gridSizeInput.value);
+    });
+
+    bombCountInput.addEventListener('input', () => {
+        bombCount = parseInt(bombCountInput.value);
     });
 
     function startTimer() {
@@ -102,67 +130,42 @@ document.addEventListener('DOMContentLoaded', () => {
     function click(cell) {
         const currentId = cell.id;
         if (isGameOver || cell.classList.contains('revealed') || cell.classList.contains('flagged')) return;
-        cell.classList.add('revealed');
-
         if (gameArray[currentId] === 'bomb') {
-            cell.classList.add('bomb');
-            cell.innerHTML = '💣';
             gameOver();
+            return;
+        }
+        cell.classList.add('revealed');
+        const total = cell.getAttribute('data');
+        if (total != 0) {
+            cell.innerHTML = total;
+            cell.classList.add(`num-${total}`);
         } else {
-            const total = cell.getAttribute('data');
-            if (total != 0) {
-                cell.innerHTML = total;
-                return;
-            }
-            checkCell(cell, currentId);
+            cell.innerHTML = '';
+            const surroundingCells = getSurroundingCells(currentId);
+            surroundingCells.forEach(id => {
+                const surroundingCell = cells[id];
+                if (!surroundingCell.classList.contains('revealed')) {
+                    click(surroundingCell);
+                }
+            });
         }
     }
 
-    function checkCell(cell, currentId) {
-        const isLeftEdge = currentId % width === 0;
-        const isRightEdge = currentId % width === width - 1;
-        setTimeout(() => {
-            if (currentId > 0 && !isLeftEdge) {
-                const newId = cells[parseInt(currentId) - 1].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId > 9 && !isRightEdge) {
-                const newId = cells[parseInt(currentId) + 1 - width].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId > 10) {
-                const newId = cells[parseInt(currentId - width)].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId > 11 && !isLeftEdge) {
-                const newId = cells[parseInt(currentId) - 1 - width].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId < 98 && !isRightEdge) {
-                const newId = cells[parseInt(currentId) + 1].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId < 90 && !isLeftEdge) {
-                const newId = cells[parseInt(currentId) - 1 + width].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId < 88 && !isRightEdge) {
-                const newId = cells[parseInt(currentId) + 1 + width].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-            if (currentId < 89) {
-                const newId = cells[parseInt(currentId) + width].id;
-                const newCell = document.getElementById(newId);
-                click(newCell);
-            }
-        }, 10);
+    function getSurroundingCells(id) {
+        const surrounding = [];
+        const isLeftEdge = id % width === 0;
+        const isRightEdge = id % width === width - 1;
+
+        if (id > 0 && !isLeftEdge) surrounding.push(parseInt(id) - 1);
+        if (id > width) surrounding.push(parseInt(id) - width);
+        if (id > width && !isRightEdge) surrounding.push(parseInt(id) + 1 - width);
+        if (id < (width * width) - 1 && !isRightEdge) surrounding.push(parseInt(id) + 1);
+        if (id < (width * width) - width) surrounding.push(parseInt(id) + width);
+        if (id < (width * width) - width && !isLeftEdge) surrounding.push(parseInt(id) - 1 + width);
+        if (id < (width * width) - 1 && id > width && !isRightEdge) surrounding.push(parseInt(id) + 1 + width);
+        if (id < (width * width) - width && id > 0 && !isLeftEdge) surrounding.push(parseInt(id) - 1 + width);
+
+        return surrounding;
     }
 
     function addFlag(cell) {
@@ -172,13 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('flagged');
                 cell.innerHTML = '🚩';
                 flags++;
-                checkWin();
             } else {
                 cell.classList.remove('flagged');
                 cell.innerHTML = '';
                 flags--;
             }
             flagsRemainingDisplay.textContent = bombCount - flags;
+            checkWin();
         }
     }
 
@@ -193,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.innerHTML = '💣';
             }
         });
+        recordGameResult('Lost');
     }
 
     function checkWin() {
@@ -205,8 +209,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusText.textContent = 'You Win!';
                 isGameOver = true;
                 stopTimer();
+                recordGameResult('Won');
             }
         }
+    }
+
+    function recordGameResult(result) {
+        const difficulty = difficultySelect.value;
+        const timeRecord = time;
+        const bestTime = bestTimes[difficulty];
+        if (bestTime === null || time < bestTime) {
+            bestTimes[difficulty] = time;
+            document.getElementById(`best-${difficulty}`).textContent = time;
+        }
+        gameHistory.unshift({ difficulty, result, time });
+        if (gameHistory.length > 5) {
+            gameHistory.pop();
+        }
+        updateHistoryList();
+    }
+
+    function updateHistoryList() {
+        historyList.innerHTML = '';
+        gameHistory.forEach((game, index) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `Game ${index + 1}: ${game.difficulty.toUpperCase()} - ${game.result} in ${game.time} sec`;
+            historyList.appendChild(listItem);
+        });
     }
 
     resetButton.addEventListener('click', createBoard);
