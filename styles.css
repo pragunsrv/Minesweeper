@@ -1,27 +1,37 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
 }
 
-#controls {
-    margin: 20px auto;
-    max-width: 600px;
-    padding: 10px;
-    text-align: center;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-#difficulty-controls {
-    margin-bottom: 15px;
+.controls {
+    margin-bottom: 20px;
 }
 
-#custom-controls {
-    margin-top: 15px;
+#difficulty-select, #grid-size, #bomb-count, #theme-select {
+    margin: 5px;
 }
+
+#custom-settings {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
 #minesweeper-grid {
     display: grid;
-    gap: 2px;
+    gap: 1px;
+    margin: 20px auto;
+    justify-content: center;
+    border: 2px solid #333;
 }
 
 .cell {
@@ -34,6 +44,8 @@ body {
     justify-content: center;
     font-size: 16px;
     font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .cell.revealed {
@@ -57,17 +69,58 @@ body {
 .num-7 { color: #000000; }
 .num-8 { color: #808080; }
 
-#minesweeper-grid {
-    display: grid;
-    gap: 1px;
-    margin: auto;
-    justify-content: center;
+#status-container {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
 }
 
-#custom-settings-button,
-#save-button,
-#load-button,
-#pause-button,
-#resume-button {
+#best-times {
+    margin: 20px 0;
+}
+
+#history {
+    margin-top: 20px;
+}
+
+#history-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#history-list li {
+    background-color: #e0e0e0;
+    padding: 5px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+}
+
+button {
     margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#theme-select {
+    margin: 5px;
+}
+
+#timer {
+    font-size: 20px;
+    font-weight: bold;
 }

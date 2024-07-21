@@ -25,6 +25,19 @@
             <input type="number" id="bomb-count" value="20" min="1">
             <button id="custom-settings-button">Apply Custom Settings</button>
         </div>
+        <!-- Theme Selection -->
+<select id="theme-select">
+    <option value="light">Light Theme</option>
+    <option value="dark">Dark Theme</option>
+</select>
+
+<!-- Save/Load Buttons -->
+<button id="save-button">Save Game</button>
+<button id="load-button">Load Game</button>
+
+<!-- Pause/Resume Buttons -->
+<button id="pause-button">Pause</button>
+<button id="resume-button">Resume</button>
         <button id="reset-button">Reset</button>
         <p id="status-text">Game in Progress</p>
         <p>Flags Remaining: <span id="flags-remaining">20</span></p>
@@ -38,20 +51,8 @@
         <h3>Game History</h3>
         <ul id="history-list"></ul>
     </div>
+    
     <div id="minesweeper-grid"></div>
     <script src="script.js"></script>
 </body>
 </html>
-<!-- Theme Selection -->
-<select id="theme-select">
-    <option value="light">Light Theme</option>
-    <option value="dark">Dark Theme</option>
-</select>
-
-<!-- Save/Load Buttons -->
-<button id="save-button">Save Game</button>
-<button id="load-button">Load Game</button>
-
-<!-- Pause/Resume Buttons -->
-<button id="pause-button">Pause</button>
-<button id="resume-button">Resume</button>

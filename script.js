@@ -1,246 +1,175 @@
 document.addEventListener('DOMContentLoaded', () => {
     const gridSizeInput = document.getElementById('grid-size');
     const bombCountInput = document.getElementById('bomb-count');
-    const difficultySelect = document.getElementById('difficulty-select');
     const customSettingsButton = document.getElementById('custom-settings-button');
     const resetButton = document.getElementById('reset-button');
-    const pauseButton = document.getElementById('pause-button');
-    const resumeButton = document.getElementById('resume-button');
+    const saveButton = document.getElementById('save-button');
+    const loadButton = document.getElementById('load-button');
+    const themeSelect = document.getElementById('theme-select');
     const statusText = document.getElementById('status-text');
-    const flagsRemainingDisplay = document.getElementById('flags-remaining');
     const timerDisplay = document.getElementById('timer');
-    const historyList = document.getElementById('history-list');
-    const bestTimes = {
-        easy: null,
-        medium: null,
-        hard: null
-    };
+    const flagsRemainingDisplay = document.getElementById('flags-remaining');
+    const bestEasyDisplay = document.getElementById('best-easy');
+    const bestMediumDisplay = document.getElementById('best-medium');
+    const bestHardDisplay = document.getElementById('best-hard');
+    
+    let gridSize = 10;
+    let bombCount = 20;
+    let gameArray = [];
+    let flags = 0;
+    let time = 0;
+    let isGameOver = false;
+    let timerInterval;
+    let theme = 'light';
+
     const themes = {
         light: {
-            background: '#f0f0f0',
+            background: '#f4f4f4',
             cell: '#c0c0c0',
-            bomb: '#f44336',
-            flagged: '#ffeb3b'
+            flagged: '#ffeb3b',
+            bomb: '#f44336'
         },
         dark: {
             background: '#333',
-            cell: '#666',
-            bomb: '#f44336',
-            flagged: '#ffeb3b'
+            cell: '#555',
+            flagged: '#ffeb3b',
+            bomb: '#ff0000'
         }
     };
 
-    let gridSize = 10;
-    let bombCount = 20;
-    let width;
-    let cells = [];
-    let gameArray = [];
-    let flags = 0;
-    let isGameOver = false;
-    let isPaused = false;
-    let time = 0;
-    let timer;
-    let gameHistory = [];
-    let currentTheme = 'light';
-
     function createBoard() {
-        isGameOver = false;
-        time = 0;
-        flags = 0;
-        flagsRemainingDisplay.textContent = bombCount;
-        timerDisplay.textContent = time;
-        statusText.textContent = 'Game in Progress';
-
         const grid = document.getElementById('minesweeper-grid');
-        grid.innerHTML = ''; // Clear the grid
-        grid.style.backgroundColor = themes[currentTheme].background;
+        grid.innerHTML = '';
+        grid.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
+        gameArray = Array(gridSize * gridSize).fill(null);
+        for (let i = 0; i < gridSize * gridSize; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => handleClick(cell));
+            cell.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                handleRightClick(cell);
+            });
+            grid.appendChild(cell);
+        }
+        applyTheme(theme);
+        placeBombs();
+        updateFlagCount();
+        startTimer();
+    }
 
-        width = gridSize;
-        grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
-
-        cells = [];
-        gameArray = Array(width * width).fill(null);
-
-        // Place bombs
+    function placeBombs() {
         let bombsPlaced = 0;
         while (bombsPlaced < bombCount) {
-            const randomIndex = Math.floor(Math.random() * gameArray.length);
-            if (gameArray[randomIndex] !== 'bomb') {
-                gameArray[randomIndex] = 'bomb';
+            const index = Math.floor(Math.random() * gameArray.length);
+            if (gameArray[index] !== 'bomb') {
+                gameArray[index] = 'bomb';
                 bombsPlaced++;
             }
         }
-
-        // Set numbers
-        for (let i = 0; i < gameArray.length; i++) {
-            if (gameArray[i] !== 'bomb') {
-                const total = getSurroundingCells(i).reduce((acc, id) => acc + (gameArray[id] === 'bomb' ? 1 : 0), 0);
-                gameArray[i] = total;
-            }
-        }
-
-        // Create cells
-        for (let i = 0; i < gameArray.length; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            cell.style.backgroundColor = themes[currentTheme].cell;
-            cell.setAttribute('data', gameArray[i]);
-            cell.id = i;
-            cell.addEventListener('click', () => click(cell));
-            cell.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                addFlag(cell);
-            });
-            grid.appendChild(cell);
-            cells.push(cell);
-        }
     }
 
-    function click(cell) {
-        if (isGameOver || cell.classList.contains('revealed') || cell.classList.contains('flagged')) return;
-
-        const currentId = cell.id;
-        if (gameArray[currentId] === 'bomb') {
-            gameOver();
-            return;
-        }
-        revealCell(cell);
-    }
-
-    function revealCell(cell) {
-        if (cell.classList.contains('revealed')) return;
-
-        cell.classList.add('revealed');
-        const data = cell.getAttribute('data');
-        if (data != 0) {
-            cell.textContent = data;
-            cell.classList.add(`num-${data}`);
-        } else {
-            getSurroundingCells(cell.id).forEach(id => {
-                const surroundingCell = cells[id];
-                if (surroundingCell && !surroundingCell.classList.contains('revealed')) {
-                    click(surroundingCell);
-                }
-            });
-        }
-        checkWin();
-    }
-
-    function getSurroundingCells(id) {
-        const surroundingIds = [];
-        const isLeftEdge = id % width === 0;
-        const isRightEdge = id % width === width - 1;
-
-        if (id > 0 && !isLeftEdge) surroundingIds.push(parseInt(id) - 1);
-        if (id > width - 1 && !isRightEdge) surroundingIds.push(parseInt(id) + 1 - width);
-        if (id > width) surroundingIds.push(parseInt(id) - width);
-        if (id > width && !isLeftEdge) surroundingIds.push(parseInt(id) - 1 - width);
-        if (id < (width * (width - 1)) && !isRightEdge) surroundingIds.push(parseInt(id) + 1);
-        if (id < (width * (width - 1) - 1) && !isLeftEdge) surroundingIds.push(parseInt(id) - 1 + width);
-        if (id < (width * (width - 2) - 1) && !isRightEdge) surroundingIds.push(parseInt(id) + 1 + width);
-        if (id < (width * (width - 1))) surroundingIds.push(parseInt(id) + width);
-
-        return surroundingIds;
-    }
-
-    function addFlag(cell) {
-        if (isGameOver || cell.classList.contains('revealed')) return;
-        if (!cell.classList.contains('flagged')) {
-            if (flags < bombCount) {
-                cell.classList.add('flagged');
-                cell.style.backgroundColor = themes[currentTheme].flagged;
-                flags++;
-                flagsRemainingDisplay.textContent = bombCount - flags;
-            }
-        } else {
-            cell.classList.remove('flagged');
-            cell.style.backgroundColor = themes[currentTheme].cell;
-            flags--;
-            flagsRemainingDisplay.textContent = bombCount - flags;
-        }
-    }
-
-    function gameOver() {
-        stopTimer();
-        isGameOver = true;
-        statusText.textContent = 'Game Over!';
-        cells.forEach(cell => {
-            if (gameArray[cell.id] === 'bomb') {
-                cell.classList.add('bomb');
-                cell.style.backgroundColor = themes[currentTheme].bomb;
-            }
-            cell.removeEventListener('click', () => click(cell));
-            cell.removeEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                addFlag(cell);
-            });
-        });
-        updateHistory('Lost');
-    }
-
-    function checkWin() {
-        const revealedCells = cells.filter(cell => cell.classList.contains('revealed'));
-        if (revealedCells.length === (width * width - bombCount)) {
+    function handleClick(cell) {
+        if (isGameOver || cell.classList.contains('flagged')) return;
+        const index = cell.dataset.index;
+        if (gameArray[index] === 'bomb') {
+            revealBombs();
+            statusText.textContent = 'Game Over!';
+            isGameOver = true;
             stopTimer();
-            statusText.textContent = 'Congratulations, You Won!';
-            updateHistory('Won');
+        } else {
+            revealCell(cell, index);
         }
     }
 
-    function updateHistory(result) {
-        if (difficultySelect.value === 'custom') return;
-        const difficulty = difficultySelect.value;
-        const timeFormatted = time + 's';
-        gameHistory.unshift({ result, time: timeFormatted });
-        if (gameHistory.length > 5) gameHistory.pop();
-        historyList.innerHTML = gameHistory.map(game => `<li>${game.result} - ${game.time}</li>`).join('');
-
-        if (bestTimes[difficulty] === null || time < parseInt(bestTimes[difficulty])) {
-            bestTimes[difficulty] = timeFormatted;
-            document.getElementById(`best-${difficulty}`).textContent = timeFormatted;
+    function handleRightClick(cell) {
+        if (isGameOver) return;
+        const index = cell.dataset.index;
+        if (cell.classList.contains('revealed')) return;
+        if (cell.classList.contains('flagged')) {
+            cell.classList.remove('flagged');
+            flags--;
+        } else {
+            cell.classList.add('flagged');
+            flags++;
         }
+        updateFlagCount();
+    }
+
+    function revealCell(cell, index) {
+        if (cell.classList.contains('revealed')) return;
+        cell.classList.add('revealed');
+        const numBombs = countAdjacentBombs(index);
+        if (numBombs > 0) {
+            cell.textContent = numBombs;
+            cell.classList.add(`num-${numBombs}`);
+        } else {
+            getAdjacentIndices(index).forEach((adjIndex) => {
+                const adjCell = document.querySelector(`.cell[data-index='${adjIndex}']`);
+                revealCell(adjCell, adjIndex);
+            });
+        }
+    }
+
+    function countAdjacentBombs(index) {
+        return getAdjacentIndices(index).filter(i => gameArray[i] === 'bomb').length;
+    }
+
+    function getAdjacentIndices(index) {
+        const adjIndices = [];
+        const row = Math.floor(index / gridSize);
+        const col = index % gridSize;
+        for (let r = row - 1; r <= row + 1; r++) {
+            for (let c = col - 1; c <= col + 1; c++) {
+                if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
+                    const adjIndex = r * gridSize + c;
+                    if (adjIndex !== parseInt(index)) {
+                        adjIndices.push(adjIndex);
+                    }
+                }
+            }
+        }
+        return adjIndices;
+    }
+
+    function revealBombs() {
+        document.querySelectorAll('.cell').forEach((cell) => {
+            const index = cell.dataset.index;
+            if (gameArray[index] === 'bomb') {
+                cell.classList.add('bomb');
+                cell.textContent = '💣';
+            }
+        });
+    }
+
+    function updateFlagCount() {
+        flagsRemainingDisplay.textContent = bombCount - flags;
     }
 
     function startTimer() {
-        timer = setInterval(() => {
-            if (!isPaused) {
-                time++;
-                timerDisplay.textContent = time;
-            }
+        timerInterval = setInterval(() => {
+            time++;
+            timerDisplay.textContent = time;
         }, 1000);
     }
 
     function stopTimer() {
-        clearInterval(timer);
-    }
-
-    function togglePause() {
-        isPaused = !isPaused;
-        pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
-        if (!isPaused) {
-            startTimer();
-        } else {
-            stopTimer();
-        }
+        clearInterval(timerInterval);
     }
 
     function resetGame() {
-        createBoard();
-        startTimer();
-    }
-
-    function applyTheme(theme) {
-        currentTheme = theme;
-        document.getElementById('minesweeper-grid').style.backgroundColor = themes[theme].background;
-        cells.forEach(cell => {
-            cell.style.backgroundColor = themes[theme].cell;
-            if (cell.classList.contains('flagged')) {
-                cell.style.backgroundColor = themes[theme].flagged;
-            }
-            if (cell.classList.contains('bomb')) {
-                cell.style.backgroundColor = themes[theme].bomb;
-            }
-        });
+        if (isGameOver) {
+            isGameOver = false;
+            time = 0;
+            timerDisplay.textContent = time;
+            updateFlagCount();
+            createBoard();
+        } else {
+            stopTimer();
+            startTimer();
+        }
+        statusText.textContent = 'Game in Progress';
     }
 
     function saveGameState() {
@@ -250,9 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameArray,
             flags,
             time,
-            isGameOver,
-            isPaused
+            isGameOver
         }));
+        saveBestTime();
     }
 
     function loadGameState() {
@@ -264,24 +193,53 @@ document.addEventListener('DOMContentLoaded', () => {
             flags = savedState.flags;
             time = savedState.time;
             isGameOver = savedState.isGameOver;
-            isPaused = savedState.isPaused;
             createBoard();
-            cells.forEach((cell, index) => {
-                if (gameArray[index] !== null) {
-                    cell.setAttribute('data', gameArray[index]);
-                    if (gameArray[index] === 'bomb') {
-                        cell.classList.add('bomb');
-                    }
-                }
-            });
-            flagsRemainingDisplay.textContent = bombCount - flags;
+            updateFlagCount();
             timerDisplay.textContent = time;
             statusText.textContent = isGameOver ? 'Game Over!' : 'Game in Progress';
-            if (!isPaused) startTimer();
+            if (!isGameOver) startTimer();
         }
     }
 
-    resetButton.addEventListener('click', resetGame);
+    function applyTheme(selectedTheme) {
+        theme = selectedTheme;
+        document.body.style.backgroundColor = themes[theme].background;
+        document.querySelectorAll('.cell').forEach((cell) => {
+            cell.style.backgroundColor = themes[theme].cell;
+            if (cell.classList.contains('flagged')) {
+                cell.style.backgroundColor = themes[theme].flagged;
+            } else if (cell.classList.contains('bomb')) {
+                cell.style.backgroundColor = themes[theme].bomb;
+            }
+        });
+    }
+
+    function saveBestTime() {
+        const timeKey = getDifficultyKey();
+        const bestTime = localStorage.getItem(timeKey);
+        if (!bestTime || time < parseInt(bestTime)) {
+            localStorage.setItem(timeKey, time);
+            updateBestTimeDisplay();
+        }
+    }
+
+    function updateBestTimeDisplay() {
+        bestEasyDisplay.textContent = localStorage.getItem('bestEasy') || 'N/A';
+        bestMediumDisplay.textContent = localStorage.getItem('bestMedium') || 'N/A';
+        bestHardDisplay.textContent = localStorage.getItem('bestHard') || 'N/A';
+    }
+
+    function getDifficultyKey() {
+        if (gridSize === 10 && bombCount === 20) return 'bestEasy';
+        if (gridSize === 15 && bombCount === 40) return 'bestMedium';
+        if (gridSize === 20 && bombCount === 99) return 'bestHard';
+        return 'bestCustom';
+    }
+
+    resetButton.addEventListener('click', () => {
+        resetGame();
+    });
+
     customSettingsButton.addEventListener('click', () => {
         gridSize = parseInt(gridSizeInput.value);
         bombCount = parseInt(bombCountInput.value);
@@ -290,15 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetGame();
     });
 
-    pauseButton.addEventListener('click', togglePause);
-    resumeButton.addEventListener('click', togglePause);
+    saveButton.addEventListener('click', saveGameState);
+    loadButton.addEventListener('click', loadGameState);
+    themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
 
-    document.getElementById('theme-select').addEventListener('change', (e) => {
-        applyTheme(e.target.value);
-    });
-
-    document.getElementById('save-button').addEventListener('click', saveGameState);
-    document.getElementById('load-button').addEventListener('click', loadGameState);
-
-    createBoard(); // Initialize board on load
+    updateBestTimeDisplay();
+    createBoard();
+    startTimer();
 });
