@@ -1,89 +1,83 @@
 body {
     font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    text-align: center;
     margin: 0;
-    background-color: #f0f0f0;
+    padding: 0;
 }
 
-.container {
+#controls {
+    margin: 20px auto;
+    max-width: 600px;
+    padding: 10px;
     text-align: center;
 }
 
-.minesweeper-grid {
+#difficulty-controls {
+    margin-bottom: 15px;
+}
+
+#custom-controls {
+    margin-top: 15px;
+}
+
+#minesweeper-grid {
     display: grid;
-    gap: 5px;
-    margin-top: 20px;
+    gap: 2px;
+    margin: 20px auto;
+    background-color: #ddd;
+    justify-content: center; /* Centering the grid horizontally */
 }
 
 .cell {
     width: 40px;
     height: 40px;
-    background-color: #ddd;
+    background-color: #c0c0c0;
+    border: 1px solid #999;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    font-size: 16px;
     cursor: pointer;
-    font-size: 18px;
-    border: 1px solid #bbb;
 }
 
 .cell.revealed {
-    background-color: #fff;
-    cursor: default;
-}
-
-.cell.bomb {
-    background-color: #ff4c4c;
+    background-color: #f0f0f0;
 }
 
 .cell.flagged {
-    background-color: #f0e68c;
+    background-color: #ffeb3b;
 }
 
-.status {
-    margin-top: 20px;
+.cell.bomb {
+    background-color: #f44336;
 }
 
-.info {
-    margin-top: 10px;
-    font-size: 18px;
+.cell.num-1 { color: #2196f3; }
+.cell.num-2 { color: #4caf50; }
+.cell.num-3 { color: #f44336; }
+.cell.num-4 { color: #9c27b0; }
+.cell.num-5 { color: #ff9800; }
+.cell.num-6 { color: #009688; }
+.cell.num-7 { color: #3f51b5; }
+.cell.num-8 { color: #795548; }
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    margin: 10px;
 }
 
-#status-text {
-    font-size: 18px;
-    margin-right: 10px;
-}
-
-.difficulty {
-    margin-top: 10px;
-    font-size: 18px;
-}
-
-#difficulty-select {
-    margin-left: 10px;
-}
-
-.hidden {
-    display: none;
-}
-
-.scoreboard {
-    margin-top: 20px;
-}
-
-.history {
-    margin-top: 20px;
+select, input {
+    font-size: 16px;
+    margin: 5px;
 }
 
 ul {
-    list-style: none;
+    list-style-type: none;
     padding: 0;
+    margin: 10px 0;
 }
 
-ul li {
+li {
     margin: 5px 0;
 }
- 
