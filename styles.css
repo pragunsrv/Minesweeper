@@ -1,0 +1,40 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    text-align: center;
+}
+
+.minesweeper-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    gap: 5px;
+}
+
+.cell {
+    width: 40px;
+    height: 40px;
+    background-color: #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 18px;
+    border: 1px solid #bbb;
+}
+
+.cell.revealed {
+    background-color: #fff;
+    cursor: default;
+}
+
+.cell.bomb {
+    background-color: #ff4c4c;
+}
