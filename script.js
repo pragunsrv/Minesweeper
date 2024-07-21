@@ -2,12 +2,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('minesweeper-grid');
     const statusText = document.getElementById('status-text');
     const resetButton = document.getElementById('reset-button');
+    const timerDisplay = document.getElementById('timer');
+    const flagsRemainingDisplay = document.getElementById('flags-remaining');
     const width = 10;
     const bombCount = 20;
     let cells = [];
     let gameArray = [];
     let isGameOver = false;
     let flags = 0;
+    let time = 0;
+    let timer;
+
+    function startTimer() {
+        timer = setInterval(() => {
+            time++;
+            timerDisplay.textContent = time;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timer);
+    }
+
+    function resetTimer() {
+        time = 0;
+        timerDisplay.textContent = time;
+    }
 
     function createBoard() {
         cells = [];
@@ -16,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isGameOver = false;
         flags = 0;
         statusText.textContent = 'Game in Progress';
+        flagsRemainingDisplay.textContent = bombCount;
+        resetTimer();
+        startTimer();
 
         const bombs = Array(bombCount).fill('bomb');
         const emptyCells = Array(width * width - bombCount).fill('empty');
@@ -128,11 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('flagged');
                 cell.innerHTML = '🚩';
                 flags++;
+                flagsRemainingDisplay.textContent = bombCount - flags;
                 checkWin();
             } else {
                 cell.classList.remove('flagged');
                 cell.innerHTML = '';
                 flags--;
+                flagsRemainingDisplay.textContent = bombCount - flags;
             }
         }
     }
@@ -140,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameOver() {
         isGameOver = true;
         statusText.textContent = 'Game Over!';
+        stopTimer();
         cells.forEach(cell => {
             if (gameArray[cell.id] === 'bomb') {
                 cell.classList.add('bomb');
@@ -157,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (matches === bombCount) {
                 statusText.textContent = 'You Win!';
                 isGameOver = true;
+                stopTimer();
             }
         }
     }
