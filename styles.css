@@ -57,3 +57,12 @@ body {
     font-size: 18px;
     margin-right: 10px;
 }
+
+.difficulty {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+#difficulty-select {
+    margin-left: 10px;
+}

@@ -4,14 +4,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = document.getElementById('reset-button');
     const timerDisplay = document.getElementById('timer');
     const flagsRemainingDisplay = document.getElementById('flags-remaining');
-    const width = 10;
-    const bombCount = 20;
+    const difficultySelect = document.getElementById('difficulty-select');
+    let width = 10;
+    let bombCount = 20;
     let cells = [];
     let gameArray = [];
     let isGameOver = false;
     let flags = 0;
     let time = 0;
     let timer;
+
+    difficultySelect.addEventListener('change', () => {
+        switch (difficultySelect.value) {
+            case 'easy':
+                width = 10;
+                bombCount = 10;
+                break;
+            case 'medium':
+                width = 10;
+                bombCount = 20;
+                break;
+            case 'hard':
+                width = 10;
+                bombCount = 30;
+                break;
+        }
+        createBoard();
+    });
 
     function startTimer() {
         timer = setInterval(() => {
@@ -39,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         flagsRemainingDisplay.textContent = bombCount;
         resetTimer();
         startTimer();
+
+        grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
 
         const bombs = Array(bombCount).fill('bomb');
         const emptyCells = Array(width * width - bombCount).fill('empty');
@@ -146,28 +167,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addFlag(cell) {
         if (isGameOver) return;
-        if (!cell.classList.contains('revealed') && (flags < bombCount || cell.classList.contains('flagged'))) {
+        if (!cell.classList.contains('revealed') && (flags < bombCount)) {
             if (!cell.classList.contains('flagged')) {
                 cell.classList.add('flagged');
                 cell.innerHTML = '🚩';
                 flags++;
-                flagsRemainingDisplay.textContent = bombCount - flags;
                 checkWin();
             } else {
                 cell.classList.remove('flagged');
                 cell.innerHTML = '';
                 flags--;
-                flagsRemainingDisplay.textContent = bombCount - flags;
             }
+            flagsRemainingDisplay.textContent = bombCount - flags;
         }
     }
 
     function gameOver() {
         isGameOver = true;
-        statusText.textContent = 'Game Over!';
+        statusText.textContent = 'Game Over';
         stopTimer();
         cells.forEach(cell => {
             if (gameArray[cell.id] === 'bomb') {
+                cell.classList.add('revealed');
                 cell.classList.add('bomb');
                 cell.innerHTML = '💣';
             }
