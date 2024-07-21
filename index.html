@@ -3,49 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minesweeper</title>
+    <title>Advanced Minesweeper</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Minesweeper</h1>
-        <div class="controls">
-            <button id="reset-button">Reset Game</button>
-            <button id="save-button">Save Game</button>
-            <button id="load-button">Load Game</button>
-            <button id="custom-settings-button">Apply Custom Settings</button>
-            <button id="undo-button">Undo</button>
-            <button id="redo-button">Redo</button>
-            <div id="custom-settings">
-                <label for="grid-size">Grid Size:</label>
-                <input type="number" id="grid-size" value="10" min="5" max="20">
-                <label for="bomb-count">Bomb Count:</label>
-                <input type="number" id="bomb-count" value="20" min="1">
-                <label for="theme-select">Theme:</label>
-                <select id="theme-select">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                </select>
+        <header>
+            <h1>Minesweeper</h1>
+            <div id="status">
+                <span id="status-text">Welcome to Minesweeper!</span>
             </div>
-            <button id="hint-button">Get Hint</button>
-        </div>
-        <div id="status-container">
-            <div id="status-text">Game in Progress</div>
-            <div>Time: <span id="timer">0</span> seconds</div>
-            <div>Flags Remaining: <span id="flags-remaining">20</span></div>
-        </div>
-        <div id="minesweeper-grid"></div>
-        <div id="best-times">
-            <h2>Best Times</h2>
-            <div>Easy: <span id="best-easy">N/A</span></div>
-            <div>Medium: <span id="best-medium">N/A</span></div>
-            <div>Hard: <span id="best-hard">N/A</span></div>
-            <div>Custom: <span id="best-custom">N/A</span></div>
-        </div>
-        <div id="history">
-            <h2>Game History</h2>
-            <ul id="history-list"></ul>
-        </div>
+            <div class="controls">
+                <button id="reset-button">Reset</button>
+                <button id="save-button">Save</button>
+                <button id="load-button">Load</button>
+                <button id="hint-button">Hint</button>
+                <button id="undo-button">Undo</button>
+                <button id="redo-button">Redo</button>
+            </div>
+            <div class="settings">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <div id="custom-settings" class="hidden">
+                    <label for="grid-size">Grid Size:</label>
+                    <input type="number" id="grid-size" min="5" max="30" value="10">
+                    <label for="bomb-count">Bomb Count:</label>
+                    <input type="number" id="bomb-count" min="1" value="10">
+                    <label for="theme">Theme:</label>
+                    <select id="theme">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                    <button id="apply-custom-settings">Apply</button>
+                </div>
+            </div>
+            <div class="info">
+                <div id="timer">Time: 0</div>
+                <div id="flags-remaining">Flags: 0</div>
+                <div class="best-times">
+                    <div>Best Times:</div>
+                    <div id="best-easy">Easy: N/A</div>
+                    <div id="best-medium">Medium: N/A</div>
+                    <div id="best-hard">Hard: N/A</div>
+                    <div id="best-custom">Custom: N/A</div>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div id="grid"></div>
+            <ul id="history"></ul>
+        </main>
     </div>
     <script src="script.js"></script>
 </body>

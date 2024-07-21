@@ -1,51 +1,74 @@
 body {
     font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f4f4f4;
+    background-color: #f0f0f0;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    text-align: center;
 }
 
-.controls {
-    margin-bottom: 20px;
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
 }
 
-#difficulty-select, #grid-size, #bomb-count, #theme-select {
-    margin: 5px;
+h1 {
+    margin: 0;
 }
 
-#custom-settings {
-    display: flex;
-    justify-content: center;
+.controls, .settings {
     margin: 10px 0;
 }
 
-#minesweeper-grid {
+button {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+.settings {
+    margin: 10px 0;
+}
+
+.hidden {
+    display: none;
+}
+
+#grid {
     display: grid;
     gap: 1px;
-    margin: 20px auto;
-    justify-content: center;
+    margin: 10px auto;
     border: 2px solid #333;
+    border-radius: 5px;
 }
 
 .cell {
-    width: 40px;
-    height: 40px;
-    background-color: #c0c0c0;
-    border: 1px solid #888;
+    width: 30px;
+    height: 30px;
+    background-color: #ddd;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    border-radius: 5px;
     font-size: 16px;
     font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .cell.revealed {
@@ -53,78 +76,46 @@ body {
 }
 
 .cell.flagged {
-    background-color: #ffeb3b;
+    background-color: #f5a623;
 }
 
 .cell.bomb {
-    background-color: #f44336;
+    background-color: red;
 }
 
-.num-1 { color: #0000ff; }
-.num-2 { color: #00ff00; }
-.num-3 { color: #ff0000; }
-.num-4 { color: #00008b; }
-.num-5 { color: #800000; }
-.num-6 { color: #008080; }
-.num-7 { color: #000000; }
-.num-8 { color: #808080; }
+.cell.num-1 { color: #1e90ff; }
+.cell.num-2 { color: #228b22; }
+.cell.num-3 { color: #ff0000; }
+.cell.num-4 { color: #00008b; }
+.cell.num-5 { color: #a52a2a; }
+.cell.num-6 { color: #00ced1; }
+.cell.num-7 { color: #000000; }
+.cell.num-8 { color: #808080; }
 
-#status-container {
-    margin-top: 20px;
-    font-size: 20px;
-    font-weight: bold;
+#timer, #flags-remaining {
+    font-size: 18px;
+    margin: 5px 0;
 }
 
-#best-times {
-    margin: 20px 0;
+.info {
+    margin: 10px 0;
+}
+
+.best-times {
+    margin: 10px 0;
+    text-align: left;
 }
 
 #history {
-    margin-top: 20px;
-}
-
-#history-list {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
+    margin: 10px auto;
+    text-align: left;
 }
 
-#history-list li {
-    background-color: #e0e0e0;
+#history li {
+    background-color: #ddd;
     padding: 5px;
-    margin: 5px 0;
-    border: 1px solid #ccc;
-}
-
-button {
-    margin: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
+    margin: 2px 0;
     border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-#theme-select {
-    margin: 5px;
-}
-
-#timer {
-    font-size: 20px;
-    font-weight: bold;
-}
-
-.hidden {
-    display: none;
 }

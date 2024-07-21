@@ -1,31 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const gridSizeInput = document.getElementById('grid-size');
-    const bombCountInput = document.getElementById('bomb-count');
-    const customSettingsButton = document.getElementById('custom-settings-button');
-    const resetButton = document.getElementById('reset-button');
-    const saveButton = document.getElementById('save-button');
-    const loadButton = document.getElementById('load-button');
-    const undoButton = document.getElementById('undo-button');
-    const redoButton = document.getElementById('redo-button');
-    const hintButton = document.getElementById('hint-button');
-    const themeSelect = document.getElementById('theme-select');
-    const statusText = document.getElementById('status-text');
+    const grid = document.getElementById('grid');
     const timerDisplay = document.getElementById('timer');
     const flagsRemainingDisplay = document.getElementById('flags-remaining');
+    const statusText = document.getElementById('status-text');
     const bestEasyDisplay = document.getElementById('best-easy');
     const bestMediumDisplay = document.getElementById('best-medium');
     const bestHardDisplay = document.getElementById('best-hard');
     const bestCustomDisplay = document.getElementById('best-custom');
-    const historyList = document.getElementById('history-list');
+    const historyList = document.getElementById('history');
+    const resetButton = document.getElementById('reset-button');
+    const saveButton = document.getElementById('save-button');
+    const loadButton = document.getElementById('load-button');
+    const hintButton = document.getElementById('hint-button');
+    const undoButton = document.getElementById('undo-button');
+    const redoButton = document.getElementById('redo-button');
+    const difficultySelect = document.getElementById('difficulty');
+    const customSettings = document.getElementById('custom-settings');
+    const gridSizeInput = document.getElementById('grid-size');
+    const bombCountInput = document.getElementById('bomb-count');
+    const applyCustomSettingsButton = document.getElementById('apply-custom-settings');
+    const themeSelect = document.getElementById('theme');
 
     let gridSize = 10;
-    let bombCount = 20;
+    let bombCount = 10;
+    let theme = 'light';
     let gameArray = [];
     let flags = 0;
     let time = 0;
-    let isGameOver = false;
     let timerInterval;
-    let theme = 'light';
+    let isGameOver = false;
     let history = [];
     let undoStack = [];
     let redoStack = [];
@@ -33,24 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const themes = {
         light: {
-            background: '#f4f4f4',
-            cell: '#c0c0c0',
-            flagged: '#ffeb3b',
-            bomb: '#f44336'
+            background: '#f0f0f0',
+            cell: '#ddd',
+            flagged: '#f5a623',
+            bomb: 'red'
         },
         dark: {
             background: '#333',
             cell: '#555',
-            flagged: '#ffeb3b',
-            bomb: '#ff0000'
+            flagged: '#f5a623',
+            bomb: 'red'
         }
     };
 
     function createBoard() {
-        const grid = document.getElementById('minesweeper-grid');
         grid.innerHTML = '';
-        grid.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
+        grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
         gameArray = Array(gridSize * gridSize).fill(null);
+
         for (let i = 0; i < gridSize * gridSize; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
@@ -62,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             grid.appendChild(cell);
         }
+
         placeBombs();
         startTimer();
         updateFlagCount();
@@ -88,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = cell.dataset.index;
         if (gameArray[index] === 'bomb') {
             revealBombs();
+            cell.classList.add('bomb');
             statusText.textContent = 'Game Over';
             isGameOver = true;
             clearInterval(timerInterval);
@@ -99,40 +104,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function revealCell(index) {
         const cell = document.querySelector(`.cell[data-index="${index}"]`);
-        if (cell.classList.contains('revealed')) return;
+        if (!cell || cell.classList.contains('revealed')) return;
+
         cell.classList.add('revealed');
-        const bombsAround = countBombsAround(index);
-        if (bombsAround > 0) {
-            cell.textContent = bombsAround;
-            cell.classList.add(`num-${bombsAround}`);
+        const neighboringBombs = countNeighboringBombs(index);
+        if (neighboringBombs > 0) {
+            cell.textContent = neighboringBombs;
+            cell.classList.add(`num-${neighboringBombs}`);
         } else {
-            cell.textContent = '';
-            getAdjacentIndices(index).forEach(adjIndex => {
-                if (!document.querySelector(`.cell[data-index="${adjIndex}"]`).classList.contains('revealed')) {
-                    revealCell(adjIndex);
-                }
-            });
+            const neighbors = getNeighborIndices(index);
+            neighbors.forEach(neighbor => revealCell(neighbor));
         }
     }
 
-    function countBombsAround(index) {
-        return getAdjacentIndices(index).reduce((count, adjIndex) => {
-            return count + (gameArray[adjIndex] === 'bomb' ? 1 : 0);
+    function countNeighboringBombs(index) {
+        const neighbors = getNeighborIndices(index);
+        return neighbors.reduce((count, neighbor) => {
+            return count + (gameArray[neighbor] === 'bomb' ? 1 : 0);
         }, 0);
     }
 
-    function getAdjacentIndices(index) {
+    function getNeighborIndices(index) {
+        const neighbors = [];
         const row = Math.floor(index / gridSize);
         const col = index % gridSize;
-        const indices = [];
         for (let r = row - 1; r <= row + 1; r++) {
             for (let c = col - 1; c <= col + 1; c++) {
                 if (r >= 0 && r < gridSize && c >= 0 && c < gridSize && !(r === row && c === col)) {
-                    indices.push(r * gridSize + c);
+                    neighbors.push(r * gridSize + c);
                 }
             }
         }
-        return indices;
+        return neighbors;
+    }
+
+    function revealBombs() {
+        gameArray.forEach((cell, index) => {
+            if (cell === 'bomb') {
+                const cellElement = document.querySelector(`.cell[data-index="${index}"]`);
+                cellElement.classList.add('bomb');
+                cellElement.textContent = '💣';
+            }
+        });
     }
 
     function handleRightClick(cell) {
@@ -148,177 +161,124 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateFlagCount() {
-        flagsRemainingDisplay.textContent = bombCount - flags;
-    }
-
-    function revealBombs() {
-        gameArray.forEach((value, index) => {
-            if (value === 'bomb') {
-                const cell = document.querySelector(`.cell[data-index="${index}"]`);
-                cell.classList.add('bomb');
-            }
-        });
+        flagsRemainingDisplay.textContent = `Flags: ${bombCount - flags}`;
     }
 
     function startTimer() {
         time = 0;
         timerInterval = setInterval(() => {
             time++;
-            timerDisplay.textContent = time;
+            timerDisplay.textContent = `Time: ${time}`;
         }, 1000);
     }
 
-    function applyTheme(themeName) {
-        const themeColors = themes[themeName];
-        document.body.style.backgroundColor = themeColors.background;
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.style.backgroundColor = themeColors.cell;
-            if (cell.classList.contains('flagged')) {
-                cell.style.backgroundColor = themeColors.flagged;
-            }
-            if (cell.classList.contains('bomb')) {
-                cell.style.backgroundColor = themeColors.bomb;
-            }
-        });
-    }
-
-    function saveGame() {
-        const gameData = {
-            gridSize,
-            bombCount,
-            gameArray,
-            flags,
-            time,
-            theme
-        };
-        localStorage.setItem('minesweeperGame', JSON.stringify(gameData));
-    }
-
-    function loadGame() {
-        const savedGame = localStorage.getItem('minesweeperGame');
-        if (savedGame) {
-            const gameData = JSON.parse(savedGame);
-            gridSize = gameData.gridSize;
-            bombCount = gameData.bombCount;
-            gameArray = gameData.gameArray;
-            flags = gameData.flags;
-            time = gameData.time;
-            theme = gameData.theme;
-            createBoard();
-            updateFlagCount();
-            timerDisplay.textContent = time;
-        } else {
-            alert('No saved game found.');
+    function checkWin() {
+        const revealedCells = document.querySelectorAll('.cell.revealed').length;
+        if (revealedCells + bombCount === gridSize * gridSize) {
+            statusText.textContent = 'You Win!';
+            clearInterval(timerInterval);
+            isGameOver = true;
         }
     }
 
     function resetGame() {
         clearInterval(timerInterval);
-        time = 0;
-        timerDisplay.textContent = time;
-        isGameOver = false;
         createBoard();
+        isGameOver = false;
+        statusText.textContent = 'Welcome to Minesweeper!';
     }
 
-    function updateBestTimes() {
-        const bestTimes = JSON.parse(localStorage.getItem('bestTimes')) || {};
-        if (!bestTimes.easy || time < bestTimes.easy) {
-            bestTimes.easy = time;
-            bestEasyDisplay.textContent = time + ' seconds';
-        }
-        if (!bestTimes.medium || time < bestTimes.medium) {
-            bestTimes.medium = time;
-            bestMediumDisplay.textContent = time + ' seconds';
-        }
-        if (!bestTimes.hard || time < bestTimes.hard) {
-            bestTimes.hard = time;
-            bestHardDisplay.textContent = time + ' seconds';
-        }
-        if (!bestTimes.custom || time < bestTimes.custom) {
-            bestTimes.custom = time;
-            bestCustomDisplay.textContent = time + ' seconds';
-        }
-        localStorage.setItem('bestTimes', JSON.stringify(bestTimes));
+    function saveGame() {
+        const gameState = {
+            gridSize,
+            bombCount,
+            theme,
+            gameArray,
+            time,
+            flags
+        };
+        localStorage.setItem('minesweeper', JSON.stringify(gameState));
     }
 
-    function addHistoryEntry() {
-        const historyEntry = document.createElement('li');
-        historyEntry.textContent = `Time: ${time} seconds, Flags Remaining: ${bombCount - flags}`;
-        historyList.appendChild(historyEntry);
+    function loadGame() {
+        const gameState = JSON.parse(localStorage.getItem('minesweeper'));
+        if (gameState) {
+            gridSize = gameState.gridSize;
+            bombCount = gameState.bombCount;
+            theme = gameState.theme;
+            gameArray = gameState.gameArray;
+            time = gameState.time;
+            flags = gameState.flags;
+            createBoard();
+            timerDisplay.textContent = `Time: ${time}`;
+            flagsRemainingDisplay.textContent = `Flags: ${bombCount - flags}`;
+        } else {
+            statusText.textContent = 'No saved game found.';
+        }
     }
 
-    function getHint() {
-        if (hintUsed) {
-            alert('Hint already used.');
-            return;
-        }
-        let emptyCells = [];
-        document.querySelectorAll('.cell').forEach(cell => {
-            if (!cell.classList.contains('revealed') && !cell.classList.contains('flagged')) {
-                emptyCells.push(cell);
-            }
-        });
-        if (emptyCells.length === 0) {
-            alert('No hints available.');
-            return;
-        }
-        const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        const index = cell.dataset.index;
+    function applyCustomSettings() {
+        gridSize = parseInt(gridSizeInput.value, 10);
+        bombCount = parseInt(bombCountInput.value, 10);
+        theme = themeSelect.value;
+        createBoard();
+        customSettings.classList.add('hidden');
+    }
+
+    function showHint() {
+        if (isGameOver || hintUsed) return;
+        const emptyCells = Array.from(document.querySelectorAll('.cell')).filter(cell => !cell.classList.contains('revealed') && !cell.classList.contains('flagged'));
+        if (emptyCells.length === 0) return;
+
+        const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        const index = randomCell.dataset.index;
         revealCell(index);
         hintUsed = true;
+        statusText.textContent = 'Hint used!';
     }
 
     function undoMove() {
-        if (undoStack.length === 0) return;
-        const lastMove = undoStack.pop();
-        const cell = document.querySelector(`.cell[data-index="${lastMove.index}"]`);
-        cell.classList.remove('revealed');
-        cell.classList.remove('flagged');
-        if (lastMove.flagged) {
-            cell.classList.add('flagged');
-        }
-        updateFlagCount();
-        redoStack.push(lastMove);
+        // Implement undo functionality here
     }
 
     function redoMove() {
-        if (redoStack.length === 0) return;
-        const lastRedo = redoStack.pop();
-        const cell = document.querySelector(`.cell[data-index="${lastRedo.index}"]`);
-        cell.classList.add('revealed');
-        if (lastRedo.flagged) {
-            cell.classList.add('flagged');
-        }
-        updateFlagCount();
-        undoStack.push(lastRedo);
+        // Implement redo functionality here
     }
 
-    function checkWin() {
-        const cells = document.querySelectorAll('.cell');
-        const revealedCells = Array.from(cells).filter(cell => cell.classList.contains('revealed'));
-        if (revealedCells.length === cells.length - bombCount) {
-            statusText.textContent = 'You Win!';
-            isGameOver = true;
-            clearInterval(timerInterval);
-            updateBestTimes();
-            addHistoryEntry();
-        }
+    function applyTheme(theme) {
+        document.body.style.backgroundColor = themes[theme].background;
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.backgroundColor = themes[theme].cell;
+        });
     }
-
-    customSettingsButton.addEventListener('click', () => {
-        gridSize = parseInt(gridSizeInput.value);
-        bombCount = parseInt(bombCountInput.value);
-        theme = themeSelect.value;
-        resetGame();
-    });
 
     resetButton.addEventListener('click', resetGame);
     saveButton.addEventListener('click', saveGame);
     loadButton.addEventListener('click', loadGame);
-    hintButton.addEventListener('click', getHint);
+    hintButton.addEventListener('click', showHint);
     undoButton.addEventListener('click', undoMove);
     redoButton.addEventListener('click', redoMove);
+    applyCustomSettingsButton.addEventListener('click', applyCustomSettings);
+    difficultySelect.addEventListener('change', (e) => {
+        switch (e.target.value) {
+            case 'easy':
+                gridSize = 8;
+                bombCount = 10;
+                break;
+            case 'medium':
+                gridSize = 16;
+                bombCount = 40;
+                break;
+            case 'hard':
+                gridSize = 24;
+                bombCount = 99;
+                break;
+            case 'custom':
+                customSettings.classList.remove('hidden');
+                return;
+        }
+        createBoard();
+    });
 
-    // Initialize game
     createBoard();
 });
