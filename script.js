@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const difficultySelect = document.getElementById('difficulty-select');
     const customSettingsButton = document.getElementById('custom-settings-button');
     const resetButton = document.getElementById('reset-button');
+    const pauseButton = document.getElementById('pause-button');
+    const resumeButton = document.getElementById('resume-button');
     const statusText = document.getElementById('status-text');
     const flagsRemainingDisplay = document.getElementById('flags-remaining');
     const timerDisplay = document.getElementById('timer');
@@ -13,6 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
         medium: null,
         hard: null
     };
+    const themes = {
+        light: {
+            background: '#f0f0f0',
+            cell: '#c0c0c0',
+            bomb: '#f44336',
+            flagged: '#ffeb3b'
+        },
+        dark: {
+            background: '#333',
+            cell: '#666',
+            bomb: '#f44336',
+            flagged: '#ffeb3b'
+        }
+    };
 
     let gridSize = 10;
     let bombCount = 20;
@@ -21,9 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameArray = [];
     let flags = 0;
     let isGameOver = false;
+    let isPaused = false;
     let time = 0;
     let timer;
     let gameHistory = [];
+    let currentTheme = 'light';
 
     function createBoard() {
         isGameOver = false;
@@ -35,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const grid = document.getElementById('minesweeper-grid');
         grid.innerHTML = ''; // Clear the grid
+        grid.style.backgroundColor = themes[currentTheme].background;
 
         width = gridSize;
         grid.style.gridTemplateColumns = `repeat(${width}, 40px)`;
@@ -64,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < gameArray.length; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
+            cell.style.backgroundColor = themes[currentTheme].cell;
             cell.setAttribute('data', gameArray[i]);
             cell.id = i;
             cell.addEventListener('click', () => click(cell));
@@ -128,11 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!cell.classList.contains('flagged')) {
             if (flags < bombCount) {
                 cell.classList.add('flagged');
+                cell.style.backgroundColor = themes[currentTheme].flagged;
                 flags++;
                 flagsRemainingDisplay.textContent = bombCount - flags;
             }
         } else {
             cell.classList.remove('flagged');
+            cell.style.backgroundColor = themes[currentTheme].cell;
             flags--;
             flagsRemainingDisplay.textContent = bombCount - flags;
         }
@@ -145,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cells.forEach(cell => {
             if (gameArray[cell.id] === 'bomb') {
                 cell.classList.add('bomb');
+                cell.style.backgroundColor = themes[currentTheme].bomb;
             }
             cell.removeEventListener('click', () => click(cell));
             cell.removeEventListener('contextmenu', (e) => {
@@ -180,8 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startTimer() {
         timer = setInterval(() => {
-            time++;
-            timerDisplay.textContent = time;
+            if (!isPaused) {
+                time++;
+                timerDisplay.textContent = time;
+            }
         }, 1000);
     }
 
@@ -189,9 +214,71 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(timer);
     }
 
+    function togglePause() {
+        isPaused = !isPaused;
+        pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+        if (!isPaused) {
+            startTimer();
+        } else {
+            stopTimer();
+        }
+    }
+
     function resetGame() {
         createBoard();
         startTimer();
+    }
+
+    function applyTheme(theme) {
+        currentTheme = theme;
+        document.getElementById('minesweeper-grid').style.backgroundColor = themes[theme].background;
+        cells.forEach(cell => {
+            cell.style.backgroundColor = themes[theme].cell;
+            if (cell.classList.contains('flagged')) {
+                cell.style.backgroundColor = themes[theme].flagged;
+            }
+            if (cell.classList.contains('bomb')) {
+                cell.style.backgroundColor = themes[theme].bomb;
+            }
+        });
+    }
+
+    function saveGameState() {
+        localStorage.setItem('minesweeperState', JSON.stringify({
+            gridSize,
+            bombCount,
+            gameArray,
+            flags,
+            time,
+            isGameOver,
+            isPaused
+        }));
+    }
+
+    function loadGameState() {
+        const savedState = JSON.parse(localStorage.getItem('minesweeperState'));
+        if (savedState) {
+            gridSize = savedState.gridSize;
+            bombCount = savedState.bombCount;
+            gameArray = savedState.gameArray;
+            flags = savedState.flags;
+            time = savedState.time;
+            isGameOver = savedState.isGameOver;
+            isPaused = savedState.isPaused;
+            createBoard();
+            cells.forEach((cell, index) => {
+                if (gameArray[index] !== null) {
+                    cell.setAttribute('data', gameArray[index]);
+                    if (gameArray[index] === 'bomb') {
+                        cell.classList.add('bomb');
+                    }
+                }
+            });
+            flagsRemainingDisplay.textContent = bombCount - flags;
+            timerDisplay.textContent = time;
+            statusText.textContent = isGameOver ? 'Game Over!' : 'Game in Progress';
+            if (!isPaused) startTimer();
+        }
     }
 
     resetButton.addEventListener('click', resetGame);
@@ -202,6 +289,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bombCount < 1) bombCount = 1;
         resetGame();
     });
+
+    pauseButton.addEventListener('click', togglePause);
+    resumeButton.addEventListener('click', togglePause);
+
+    document.getElementById('theme-select').addEventListener('change', (e) => {
+        applyTheme(e.target.value);
+    });
+
+    document.getElementById('save-button').addEventListener('click', saveGameState);
+    document.getElementById('load-button').addEventListener('click', loadGameState);
 
     createBoard(); // Initialize board on load
 });
